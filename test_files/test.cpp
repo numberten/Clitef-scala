@@ -1,4 +1,4 @@
 
-int main () {
-   int 'dog';
+void main () {
+   return 1;
 }
