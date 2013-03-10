@@ -4,7 +4,7 @@ import java.io._
 
 object LexerTest {
 
-    class Lexer() { // source filename
+    class Lexer(val fileName:String) { // source filename
     
     var isEof:Boolean = false;
     var ch:Char = ' '; 
@@ -17,7 +17,6 @@ object LexerTest {
     val eolnCh:Char = '\n';
     val eofCh:Char = '\004';
 
-    def run(fileName:String) = {
         try {
             input = new BufferedReader (new FileReader(fileName));
         }
@@ -25,7 +24,6 @@ object LexerTest {
          case e:FileNotFoundException => println("File not found: " + fileName);System.exit(1);
          case unknown => println("Unknown exception " + unknown);System.exit(-1);
             }
-    }
 
     def nextChar():Char = { // Return next char
         if (ch == eofCh)
@@ -162,8 +160,7 @@ object LexerTest {
 }
 
    def main(args: Array[String]) = {
-      val lexer = new Lexer()
-      lexer.run(args(0))
+      val lexer = new Lexer(args(0))
       var tok = lexer.next()
       while (tok != Token.eofTok) {
          println(tok.toString())
