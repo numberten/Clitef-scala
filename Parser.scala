@@ -24,6 +24,12 @@ object ParserTester {
    def myerror(s:String):Unit = { System.err.println("Syntax error: expecting: " + s + "; saw: " + token);System.exit(1) }
   
    def program():Program = {
+      val g:Declarations = declarations() //match globals
+      val f:Functions = functions() //match functions
+      return new Program(g, f)
+   }
+  /* 
+   def program():Program = {
       val header:Array[TokenType] = Array(TokenType.Int, TokenType.Main, TokenType.LeftParen, TokenType.RightParen)
       for (t <- header)
          mymatch(t)
@@ -33,6 +39,29 @@ object ParserTester {
       mymatch(TokenType.RightBrace)
       return new Program(d,b)
    }
+   */
+
+   def functions():Functions = {
+      val f:Functions = new Functions()
+      while (token.`type`().equals(TokenType.Bool) || token.`type`().equals(TokenType.Char) || token.`type`().equals(TokenType.Float) || token.`type`().equals(TokenType.Int) || token.`type`().equals(TokenType.Void)) {
+         function(f)
+      }
+      return f
+   }
+
+   def expressions():Expressions = {
+      val e:Expressions = new Expressions()
+      if (token.`type`().equals(TokenType.RightParen)) {
+         mymatch(TokenType.RightParen)
+         return e
+      }
+      e.add(expression())
+      while (token.`type`().equals(TokenType.Comma)) {
+         mymatch(TokenType.Comma)
+         e.add(expression())
+      }
+      return e
+   }
 
    def declarations():Declarations = {
       val d:Declarations = new Declarations()
@@ -40,6 +69,24 @@ object ParserTester {
          declaration(d)
       }
       return d
+   }
+
+   def declarationsp():Declarations = {
+      val d:Declarations = new Declarations()
+      if (token.`type`().equals(TokenType.Bool) || token.`type`().equals(TokenType.Char) || token.`type`().equals(TokenType.Float) || token.`type`(). equals(TokenType.Int)) 
+         singleD(d)
+      while (!(token.`type`().equals(TokenType.RightParen))) {
+            mymatch(TokenType.Comma)
+            singleD(d)
+      }
+      return d
+   }
+
+   def singleD(ds:Declarations):Unit = {
+      val current_type:Type = new Type(token.value())
+      token = lexer.next()
+      val current_variable:Variable = new Variable(mymatch(TokenType.Identifier))
+      ds.add(new Declaration(current_variable, current_type))
    }
          
    def declaration(ds:Declarations):Unit = {
@@ -49,22 +96,56 @@ object ParserTester {
          var current_variable:Variable = new Variable(mymatch(TokenType.Identifier))
          ds.add(new Declaration(current_variable, current_type)) }
       while (token.`type`().equals(TokenType.Comma))
-      mymatch(TokenType.Semicolon)
+         mymatch(TokenType.Semicolon)
+   }
+
+   var lastF:Variable = _
+
+   def function(fs:Functions):Unit = {
+      val current_type:Type = new Type(token.value())
+      var name:Variable = new Variable("")
+      //get function maaaaan
+      //class Function(val t:Type, val id:Variable, val params:Declarations, val locals:Declarations, val body:Block) 
+      token = lexer.next()
+      if (token.`type`().equals(TokenType.Main)) {
+         name = new Variable(mymatch(TokenType.Main))
+      } else {
+         name = new Variable(mymatch(TokenType.Identifier))
+      }
+      lastF = name
+      mymatch(TokenType.LeftParen)
+      val p:Declarations = declarationsp()
+      mymatch(TokenType.RightParen)
+      mymatch(TokenType.LeftBrace)
+      val l:Declarations = declarations()
+      val b:Block = statements()
+      mymatch(TokenType.RightBrace)
+      println("Totally just matched a function called: "+name)
+      fs.add(new Function(current_type, name, p, l, b))
    }
   
    def statement():Statement = {
       val s:Statement = new Skip()
-      if (token.`type`().equals(TokenType.Identifier))
-         return assignment()
+      if (token.`type`().equals(TokenType.Identifier)) {
+         val v:Variable = new Variable(mymatch(TokenType.Identifier))
+         if (token.`type`().equals(TokenType.LeftParen)) {
+            return callS(v) }
+         return assignment(v) }
+      else if (token.`type`().equals(TokenType.Return)) {
+         mymatch(TokenType.Return)
+         val result:Expression = expression()
+         mymatch(TokenType.Semicolon)
+         return new Return(lastF,result)
+      }
       else if (token.`type`().equals(TokenType.LeftBrace)) {
          mymatch(TokenType.LeftBrace)
          val b:Statement = statements()
          mymatch(TokenType.RightBrace)
          return b }
-      else if (token.`type`().equals(TokenType.If))
-         return ifStatement()
-      else if (token.`type`().equals(TokenType.While))
-         return whileStatement()
+      else if (token.`type`().equals(TokenType.If)) {
+         return ifStatement() }
+      else if (token.`type`().equals(TokenType.While)) {
+         return whileStatement() }
       mymatch(TokenType.Semicolon)
       return s
    }
@@ -75,8 +156,16 @@ object ParserTester {
       return b
    }
 
-   def assignment():Assignment = {
-      val target:Variable = new Variable(mymatch(TokenType.Identifier))
+   def callS(name:Variable):SCall = {
+      mymatch(TokenType.LeftParen)
+      val args:Expressions = expressions()
+      mymatch(TokenType.RightParen)
+      mymatch(TokenType.Semicolon)
+      return new SCall(name, args)
+   }  
+
+   def assignment(target:Variable):Assignment = {
+      //val target:Variable = new Variable(mymatch(TokenType.Identifier))
       mymatch(TokenType.Assign)
       val source:Expression = expression
       mymatch(TokenType.Semicolon)
@@ -178,6 +267,12 @@ object ParserTester {
       var e:Expression = null
       if (token.`type`().equals(TokenType.Identifier)) {
          e = new Variable(mymatch(TokenType.Identifier))
+         if (token.`type`().equals(TokenType.LeftParen)) {
+            mymatch(TokenType.LeftParen)
+            val args:Expressions = expressions()
+            mymatch(TokenType.RightParen)
+            return new ECall(e.asInstanceOf[Variable], args)
+         }
       } else if (isLiteral()) { e = literal() }
         else if (token.`type`().equals(TokenType.LeftParen)) {
             token = lexer.next()
@@ -189,7 +284,7 @@ object ParserTester {
                   val term:Expression = expression()
                   mymatch(TokenType.RightParen)
                   e = new Unary(op, term)
-               } else myerror("Identifier | Literal | ( | Type")
+               } else myerror("Call | Identifier | Literal | ( | Type")
                return e
             }
 
@@ -262,5 +357,4 @@ object ParserTester {
       val prog:Program = parser.program()
       prog display
    }
-    
-}
+}    

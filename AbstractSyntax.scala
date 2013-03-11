@@ -1,5 +1,5 @@
 import java.util._
-/*
+
 class Program(val globals:Declarations, val functions:Functions) {
    
    def display:Unit = {
@@ -8,8 +8,8 @@ class Program(val globals:Declarations, val functions:Functions) {
       functions.display(0)
    }
 }
-*/
 
+/*
 class Program(val decpart:Declarations, val body:Block) {
    def display():Unit = {
       println("Display of Program Object")
@@ -17,9 +17,29 @@ class Program(val decpart:Declarations, val body:Block) {
       body.display(0)
    }
 }
+*/
 
-class Declarations() extends java.util.ArrayList[Declaration] {
-   
+class Functions() extends java.util.ArrayList[Function] {
+   def display(j:Int):Unit = {
+      for (i <- 0 to j)
+         print("\t")
+      println("Display of Functions Object")
+      for (i <- 0 until this.size)
+            this.get(i).display(j+1)
+   }
+}
+
+class Expressions() extends java.util.ArrayList[Expression] {
+   def display(j:Int):Unit = {
+      for (i <- 0 to j)
+         print("\t")
+      println("Display of Expressions Object")
+      for (i <- 0 until this.size)
+         this.get(i).display(j+1)
+   }
+}
+
+class Declarations() extends java.util.ArrayList[Declaration] {   
    def display(j:Int):Unit = {
       for (i <- 0 to j) 
          print("\t")
@@ -27,59 +47,35 @@ class Declarations() extends java.util.ArrayList[Declaration] {
       for (i <- 0 until this.size)
          this.get(i).display(j+1)
    }
-}
-
-class Declaration(val v:Variable, val t:Type) {
+}        
+         
+class ECall(val name:Variable, val args:Expressions) extends Expression {
    def display(j:Int):Unit = {
       for (i <- 0 to j)
          print("\t")
-      println("Display of Declaration Object")
-      v.display(j + 1)
-      t.display(j + 1)
+      println("Display of ECall Object")
+      name.display(j+1)
+      args.display(j+1)
    }
 }
 
-class Type(val id:String) {
-//   val INT:Type = new Type("int")
-//   val BOOL:Type = new Type("bool")
-//   val CHAR:Type = new Type("char")
-//   val FLOAT:Type = new Type("float")
-
-   override def toString():String = { return id}
-   def equals(t:Type):Boolean = { return t.id.equals(this.id) }
+class SCall(val name:Variable, val args:Expressions) extends Statement {
    def display(j:Int):Unit = {
       for (i <- 0 to j)
          print("\t")
-      println("Display of Type Object: "+id)
-   }
-}
-object DefaultType {
-   val INT:Type = new Type("int")
-   val BOOL:Type = new Type("bool")
-   val CHAR:Type = new Type("char")
-   val FLOAT:Type = new Type("float")
-}
-
-abstract class Statement() {
-   def display(j:Int):Unit 
-}
-
-class Skip() extends Statement {
-   def display(j:Int) {
-      for (i <- 0 to j)
-         print("\t")
-      println("Display of Skip object")
+      println("Display of SCall Object")
+      name.display(j+1)
+      args.display(j+1)
    }
 }
 
-class Block() extends Statement {
-   val members:java.util.ArrayList[Statement] = new ArrayList[Statement]()
+class Return(val target:Variable, val result:Expression) extends Statement {
    def display(j:Int):Unit = {
       for (i <- 0 to j)
          print("\t")
-      println("Display of Block Object")
-      for (i <- 0 until members.size)
-         members.get(i).display(j+1)
+      println("Display of Return Object")
+      target.display(j+1)
+      result.display(j+1)
    }
 }
 
